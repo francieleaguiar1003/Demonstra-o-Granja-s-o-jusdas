@@ -182,7 +182,7 @@ var UI = (function () {
         switch (campo.t) {
             case 'opcoes':   lista = campo.op.map(function (o) { return [o, o || '—']; }); break;
             case 'simnao':   lista = [['Sim', 'Sim'], ['Não', 'Não']]; break;
-            case 'motivo':   lista = D.MOTIVOS.map(function (m) { return [m, m]; }); break;
+            case 'motivo':   lista = D.motivos(db).map(function (m) { return [m, m]; }); break;
             case 'tipoemb':  lista = D.TIPOS_EMBALAGEM.map(function (t) { return [t.chave, t.nome]; }); break;
             case 'lote':     lista = [['', campo.obr ? 'Escolha o lote' : 'Granja toda']].concat(D.lotesDoUsuario(db, API.usuario()).map(function (l) { return [l.lote, D.nomeLote(db, l.lote)]; })); break;
             case 'linhagem': lista = (db.linhagens || []).map(function (l) { return [l.linhagem, l.linhagem]; }); break;

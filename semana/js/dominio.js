@@ -20,7 +20,14 @@ var Dominio = (function () {
     'use strict';
 
     /* =====================================================
-       1. LISTAS FIXAS
+       1. LISTAS DA GRANJA
+       Os valores escritos aqui são o PADRÃO DE FÁBRICA. A granja
+       troca qualquer um deles em Cadastros › Configurações, sem
+       mexer no código: o que for salvo lá fica na aba Config
+       (chave → valor) e passa a valer no lugar destes.
+       Nas telas, use sempre as funções do fim deste bloco
+       — motivos(db), checkLote(db), checkGeral(db),
+       semanasDescarte(db) — e nunca as listas direto.
        ===================================================== */
 
     /* Motivos de morte (lista combinada com o Julio) */
@@ -56,16 +63,6 @@ var Dominio = (function () {
         'b-embalagens': 'PAC 16 · Lote de embalagens',
         'estoque-embalagens': 'PAC 16 · Estoque de embalagens'
     };
-
-    /* Checklist diário da granja (gestão), um por lote e dia */
-    var CHECK_GRANJA = [
-        ['cortinas', 'Cortinas limpas'],
-        ['tachinhas', 'Tachinhas limpas'],
-        ['ninhos', 'Ninhos ok'],
-        ['piolho', 'Produto para piolho aplicado'],
-        ['passeios', 'Passeios varridos'],
-        ['mortalidade_verificada', 'Mortalidade verificada']
-    ];
 
     /* Checklist do dia das colaboradoras: itens do lote */
     var CHECK_LOTE = [
@@ -133,6 +130,42 @@ var Dominio = (function () {
         { chave: 'pente30', nome: 'Pente 30 (G e Caipirinho)', usa: ['pente30', 'caipirinho'] },
         { chave: 'caixa', nome: 'Caixa de papelão', usa: [] }
     ];
+
+
+    /* ----- O QUE A GRANJA PODE TROCAR (Cadastros › Configurações) -----
+       Cada lista fica na aba Config, numa linha por item. Sem nada salvo
+       lá (ou com o campo vazio), vale o padrão de fábrica escrito acima.
+       Para abrir uma lista nova à granja, basta acrescentar a chave aqui
+       e o bloco correspondente em js/telas/configuracoes.js. */
+    var CONFIG_LISTAS = {
+        motivos_mortalidade: MOTIVOS,
+        checklist_lote: CHECK_LOTE,
+        checklist_geral: CHECK_GERAL
+    };
+    function valorConfig(db, chave) {
+        var c = db && (db.config || []).find(function (x) { return x.chave === chave; });
+        return c ? String(c.valor == null ? '' : c.valor) : '';
+    }
+    /* Texto da Config virado lista (uma linha por item), sem linhas em branco */
+    function listaConfig(db, chave) {
+        var itens = valorConfig(db, chave).split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+        return itens.length ? itens : CONFIG_LISTAS[chave];
+    }
+    function motivos(db) { return listaConfig(db, 'motivos_mortalidade'); }
+    function checkLote(db) { return listaConfig(db, 'checklist_lote'); }
+    function checkGeral(db) { return listaConfig(db, 'checklist_geral'); }
+    /* Itens de UM checklist já salvo: a lista que ele levou junto (registros novos)
+       ou, para registros antigos, a lista que está valendo agora. */
+    function itensDoChecklist(db, registro) {
+        var guardada = registro && registro.itens ? lerJSON(registro.itens, null) : null;
+        if (guardada && guardada.length) return guardada;
+        return registro && registro.tipo === 'geral' ? checkGeral(db) : checkLote(db);
+    }
+    /* Semanas até o descarte: número inteiro; qualquer coisa inválida volta ao padrão */
+    function semanasDescarte(db) {
+        var v = Math.round(Number(valorConfig(db, 'semanas_descarte').replace(',', '.')));
+        return v > 0 && v <= 300 ? v : SEMANAS_DESCARTE;
+    }
 
 
     /* =====================================================
@@ -231,13 +264,6 @@ var Dominio = (function () {
             { k: 'def_sujos', r: 'Defeituosos + sujos (soma)', t: 'numero' },
             { k: 'responsavel', r: 'Responsável', t: 'texto', obr: true }
         ] },
-        checklist_granja: { aba: 'ChecklistGranja', titulo: 'Checklist diário', campos: [
-            { k: 'data', r: 'Data', t: 'data', obr: true },
-            { k: 'lote', r: 'Lote', t: 'lote', obr: true }
-        ].concat(CHECK_GRANJA.map(function (c) { return { k: c[0], r: c[1], t: 'simnao' }; })).concat([
-            { k: 'racao', r: 'Nível da ração', t: 'opcoes', op: ['Ok', 'Baixa', 'Acabou'] },
-            { k: 'observacao', r: 'Observação', t: 'texto' }
-        ]) },
         pesagens: { aba: 'PesoSemanal', titulo: 'Peso semanal', campos: [
             { k: 'data', r: 'Data', t: 'data', obr: true },
             { k: 'lote', r: 'Lote', t: 'lote', obr: true },
@@ -360,6 +386,10 @@ var Dominio = (function () {
             { k: 'tipo', r: 'Tipo', t: 'opcoes', op: ['lote', 'geral'], obr: true },
             { k: 'colaboradora', r: 'Colaboradora', t: 'texto' },
             { k: 'respostas', r: 'Respostas', t: 'texto' },
+            /* Lista de itens usada no dia: as respostas são guardadas por posição, então o
+               registro leva junto a lista que estava valendo. Assim, mudar o checklist em
+               Configurações não troca o texto dos checklists já salvos. */
+            { k: 'itens', r: 'Itens respondidos', t: 'longo' },
             { k: 'c', r: 'Conformes', t: 'numero' },
             { k: 'nc', r: 'Não conformes', t: 'numero' },
             { k: 'observacao', r: 'Observação', t: 'texto' }
@@ -441,10 +471,11 @@ var Dominio = (function () {
         return 'Lote ' + lote + (l && l.linhagem ? ' · ' + l.linhagem : '');
     }
 
-    /* Descarte = nascimento + 92 semanas (sem nascimento, conta do alojamento) */
-    function descartePrevisto(lote) {
+    /* Descarte = nascimento + as semanas de Configurações (padrão 92).
+       Sem data de nascimento, conta do alojamento. */
+    function descartePrevisto(lote, db) {
         var base = lote.data_nascimento || lote.data_inicio;
-        return base ? somarDias(base, SEMANAS_DESCARTE * 7) : '';
+        return base ? somarDias(base, semanasDescarte(db) * 7) : '';
     }
 
     /* Idade em semanas pela data de nascimento (ou alojamento) */
@@ -535,7 +566,7 @@ var Dominio = (function () {
         return (db.lotes || []).filter(function (l) { return l.ativo !== 'Não' && (!l.data_inicio || l.data_inicio <= data); });
     }
     function avesNoDia(db, lote, data) {
-        if (lote != null && lote !== '') { var l = acharLote(db, lote); return l ? avesVivas(db, l, data) : 0; }
+        if (lote != null && lote !== '') { var l = acharLote(db, lote); return l ? Math.max(0, avesVivas(db, l, data)) : 0; }
         return lotesNoDia(db, data).reduce(function (s, l) { return s + Math.max(0, avesVivas(db, l, data)); }, 0);
     }
     /* Guia do dia: o do lote, ou a média dos guias pesada pelas aves de cada lote */
@@ -560,9 +591,16 @@ var Dominio = (function () {
         if (lote != null && lote !== '') (db.producao || []).forEach(function (p) {
             if (mesmoLote(p.lote, lote) && n(p.ovos_lote) > 0 && noPeriodo(p.data, de, ate)) { porDia[p.data] = n(p.ovos_lote); contagem = true; }
         });
-        var nd = Object.keys(porDia).length, t = Object.keys(porDia).reduce(function (s, d) { return s + porDia[d]; }, 0);
+        var dias = Object.keys(porDia);
+        var nd = dias.length, t = dias.reduce(function (s, d) { return s + porDia[d]; }, 0);
         var b = c.reduce(function (s, x) { return s + n(x.bons); }, 0), v = avesNoDia(db, lote, ate);
-        return { coletas: c, total: t, bons: contagem ? null : b, dias: nd, aves: v, real: nd && v ? t / nd / v * 100 : 0, guia: guiaNoDia(db, lote, ate), contagem: contagem };
+        /* Guia médio do MESMO conjunto de dias usado no "real" (não só o guia do último
+           dia): a curva muda rápido nas semanas de arranque, então comparar uma média de
+           período com um valor de um único dia gerava diferenças enganosas no relatório. */
+        var guiaSoma = 0, guiaN = 0;
+        dias.forEach(function (d) { var g = guiaNoDia(db, lote, d); if (g != null) { guiaSoma += g; guiaN++; } });
+        var guia = guiaN ? guiaSoma / guiaN : guiaNoDia(db, lote, ate);
+        return { coletas: c, total: t, bons: contagem ? null : b, dias: nd, aves: v, real: nd && v ? t / nd / v * 100 : 0, guia: guia, contagem: contagem };
     }
     /* Ovos de cada lote num dia (contagem do fim do dia), se a equipe lançou */
     function ovosPorLote(db, data) {
@@ -593,10 +631,10 @@ var Dominio = (function () {
         });
     }
     /* Controle de idades: semana 1 = nascimento + 7 dias, até o descarte */
-    function controleIdades(l) {
+    function controleIdades(l, db) {
         if (!l.data_nascimento) return [];
-        var out = [];
-        for (var s = 1; s <= SEMANAS_DESCARTE; s++) out.push({ semana: s, data: somarDias(l.data_nascimento, s * 7) });
+        var out = [], fim = semanasDescarte(db);
+        for (var s = 1; s <= fim; s++) out.push({ semana: s, data: somarDias(l.data_nascimento, s * 7) });
         return out;
     }
 
@@ -696,13 +734,6 @@ var Dominio = (function () {
             g.complemento = (db.recebimentos || []).some(function (r) { return r.data_postura === g.data && mesmoLote(r.lote_granja, g.lote); });
             return g;
         }).sort(function (a, b) { return String(a.data).localeCompare(String(b.data)) || String(a.lote).localeCompare(String(b.lote)); });
-    }
-
-    /* Itens pendentes do checklist diário da granja */
-    function checklistPendente(row) {
-        var falta = CHECK_GRANJA.filter(function (c) { return row[c[0]] !== 'Sim'; }).map(function (c) { return c[1]; });
-        if (row.racao === 'Baixa' || row.racao === 'Acabou') falta.push('Ração ' + row.racao.toLowerCase());
-        return falta;
     }
 
 
@@ -995,8 +1026,9 @@ var Dominio = (function () {
        Três perfis:
          - Administrador: tudo.
          - Granja e Beneficiamento: a equipe vê os dois sistemas
-           juntos (granja + beneficiamento + cadastros + relatórios),
-           menos Usuários e os relatórios das colaboradoras.
+           juntos (granja + beneficiamento), menos Mortalidade (só as
+           colaboradoras lançam). Não vê Cadastros, Relatórios, Pedidos,
+           Romaneio, Usuários nem a área das colaboradoras.
          - Colaboradora: sempre vai para a área dela.
        "acessos" guarda "Todos" (ou uma lista de ids de tela).
        ===================================================== */
@@ -1016,7 +1048,8 @@ var Dominio = (function () {
             ['b-beneficiamento', 'Beneficiamento'], ['b-estoque', 'Produção embalada'], ['b-pedidos', 'Pedidos'], ['b-romaneio', 'Romaneio']
         ] },
         { id: 'cad', nome: 'CADASTROS', cor: '#b4b0c4', telas: [
-            ['g-lotes', 'Lotes das aves'], ['clientes', 'Clientes'], ['produtos', 'Produtos'], ['linhagens', 'Linhagens'], ['usuarios', 'Usuários']
+            ['g-lotes', 'Lotes das aves'], ['clientes', 'Clientes'], ['produtos', 'Produtos'], ['linhagens', 'Linhagens'], ['usuarios', 'Usuários'],
+            ['configuracoes', 'Configurações']
         ] }
     ];
     var TELAS_SOLTAS = [['painel', 'Painel'], ['relatorios', 'Relatórios']];
@@ -1030,13 +1063,12 @@ var Dominio = (function () {
        Usuário antigo com "Todos" ou vazio = as telas de costume do perfil (abaixo).
        O que vem marcado ao escolher o perfil: */
     /* Só o administrador: usuários, alertas, tarefas, avisos, pedidos, romaneio, cadastros e relatórios */
-    var SO_ADMIN = ['usuarios', 'g-tarefas', 'g-alertas', 'c-avisos', 'b-pedidos', 'b-romaneio', 'g-lotes', 'clientes', 'produtos', 'linhagens', 'relatorios'];
+    var SO_ADMIN = ['usuarios', 'g-tarefas', 'g-alertas', 'c-avisos', 'b-pedidos', 'b-romaneio', 'g-lotes', 'clientes', 'produtos', 'linhagens', 'relatorios', 'configuracoes'];
     function acessosPadrao(perfil) {
         if (perfil === 'Colaboradora') return ['g-coletas', 'g-mortalidade', 'c-resumo', 'c-checklist'];
         var todas = [];
         SISTEMAS.forEach(function (s) { if (!s.soAdmin) s.telas.forEach(function (t) { if (SO_ADMIN.indexOf(t[0]) < 0) todas.push(t[0]); }); });
-        todas.push('relatorios');
-        if (perfil === 'Administrador') return todas.concat(TELAS_COLAB.map(function (t) { return t[0]; }));
+        if (perfil === 'Administrador') return todas.concat(['relatorios']).concat(TELAS_COLAB.map(function (t) { return t[0]; }));
         /* equipe (de baixo): tudo, menos mortalidade (só as colaboradoras) e Usuários */
         return todas.filter(function (t) { return t !== 'g-mortalidade' && t !== 'usuarios'; });
     }
@@ -1086,7 +1118,10 @@ var Dominio = (function () {
     }
 
     return {
-        MOTIVOS: MOTIVOS, SEMANAS_DESCARTE: SEMANAS_DESCARTE, CHECK_GRANJA: CHECK_GRANJA, CHECK_LOTE: CHECK_LOTE, CHECK_GERAL: CHECK_GERAL,
+        MOTIVOS: MOTIVOS, SEMANAS_DESCARTE: SEMANAS_DESCARTE, CHECK_LOTE: CHECK_LOTE, CHECK_GERAL: CHECK_GERAL,
+        /* listas que a granja troca em Cadastros › Configurações (use estas nas telas) */
+        motivos: motivos, checkLote: checkLote, checkGeral: checkGeral, semanasDescarte: semanasDescarte, itensDoChecklist: itensDoChecklist,
+        valorConfig: valorConfig, CONFIG_LISTAS: CONFIG_LISTAS,
         MAQUINA: MAQUINA, TIPOS_EMBALAGEM: TIPOS_EMBALAGEM, CURVAS_GUIAS: CURVAS_GUIAS, TABELAS: TABELAS, CHAVES: CHAVES,
         SISTEMAS: SISTEMAS, TELAS_SOLTAS: TELAS_SOLTAS, TELAS_COLAB: TELAS_COLAB, acessosPadrao: acessosPadrao, acessosDe: acessosDe,
         SO_ADMIN: SO_ADMIN, notaRepetida: notaRepetida,
@@ -1095,7 +1130,7 @@ var Dominio = (function () {
         iso: iso, hoje: hoje, somarDias: somarDias, diasEntre: diasEntre, br: br, diaMes: diaMes, noPeriodo: noPeriodo, periodo: periodo,
         proximoLote: proximoLote, lotesAtivos: lotesAtivos, acharLote: acharLote, nomeLote: nomeLote, descartePrevisto: descartePrevisto,
         idade: idade, lerCurva: lerCurva, valorCurva: valorCurva, posturaGuia: posturaGuia, avesVivas: avesVivas, totalColeta: totalColeta,
-        producaoDiaria: producaoDiaria, sugestaoSaida: sugestaoSaida, totalSaida: totalSaida, coletasDoDia: coletasDoDia, saidaDoDia: saidaDoDia, saidas: saidas, chegandoDaGranja: chegandoDaGranja, checklistPendente: checklistPendente,
+        producaoDiaria: producaoDiaria, sugestaoSaida: sugestaoSaida, totalSaida: totalSaida, coletasDoDia: coletasDoDia, saidaDoDia: saidaDoDia, saidas: saidas, chegandoDaGranja: chegandoDaGranja,
         proximoLoteReceb: proximoLoteReceb, codigoLoteDia: codigoLoteDia, loteDaColeta: loteDaColeta, loteDestino: loteDestino, coletaRecebida: coletaRecebida, coletasNaoRecebidas: coletasNaoRecebidas, coletasSemConferir: coletasSemConferir, codigoDoDia: codigoDoDia, avesNoDia: avesNoDia, guiaNoDia: guiaNoDia, posturaPeriodo: posturaPeriodo, lotesNoDia: lotesNoDia, totalRecebido: totalRecebido, perdaRecebimento: perdaRecebimento, saidaDoRecebimento: saidaDoRecebimento, recebidoDaGranja: recebidoDaGranja,
         embalados: embalados, conferencia: conferencia, usadasDaProducao: usadasDaProducao, saldoEmbalagem: saldoEmbalagem,
         situacaoEmbalagem: situacaoEmbalagem, embalagensUsadas: embalagensUsadas, proximoLoteEmbalagem: proximoLoteEmbalagem, nomeTipoEmbalagem: nomeTipoEmbalagem,

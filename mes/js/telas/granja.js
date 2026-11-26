@@ -130,7 +130,7 @@
                     (aviso ? ' <span class="piscando" title="' + h(aviso) + '"></span>' : ''),
                 h(l.linhagem), sem == null ? '—' : sem + ' sem', fmt(v) + ' / ' + fmt(l.aves_iniciais),
                 pl.dias && l.ativo !== 'Não' ? pl.real.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' : '—',
-                D.br(l.descarte_previsto || D.descartePrevisto(l)), l.ativo === 'Não' ? UI.tag('Encerrado' + (l.data_encerramento ? ' ' + D.br(l.data_encerramento) : ''), 'neutra') : UI.tag('Ativo', 'ok')];
+                D.br(l.descarte_previsto || D.descartePrevisto(l, db)), l.ativo === 'Não' ? UI.tag('Encerrado' + (l.data_encerramento ? ' ' + D.br(l.data_encerramento) : ''), 'neutra') : UI.tag('Ativo', 'ok')];
         });
 
         var ficha = '<p class="vazio">Cadastre o primeiro lote.</p>', curva = '', abas = '';
@@ -138,7 +138,7 @@
             var sem = D.idade(sel), vivas = D.avesVivas(db, sel);
             ficha = '<p class="eyebrow">Ficha do lote</p><h2 class="titulo-ficha">Lote ' + h(sel.lote) + ' · ' + h(sel.linhagem) + '</h2>' +
                 '<div class="indicadores" style="grid-template-columns:1fr 1fr">' + ind('Aves vivas', fmt(vivas), 'de ' + fmt(sel.aves_iniciais) + ' alojadas') + ind('Idade', sem == null ? '—' : sem + ' sem', sel.data_nascimento ? 'pelo nascimento' : 'pelo alojamento') + '</div>' +
-                '<table class="tabela"><tbody>' + [['Nascimento', D.br(sel.data_nascimento) || '—'], ['Alojamento', D.br(sel.data_inicio)], ['Descarte previsto', D.br(sel.descarte_previsto || D.descartePrevisto(sel)) + ' (' + D.SEMANAS_DESCARTE + ' semanas)'],
+                '<table class="tabela"><tbody>' + [['Nascimento', D.br(sel.data_nascimento) || '—'], ['Alojamento', D.br(sel.data_inicio)], ['Descarte previsto', D.br(sel.descarte_previsto || D.descartePrevisto(sel, db)) + ' (' + D.semanasDescarte(db) + ' semanas)'],
                     ['Origem', h((sel.origem || '—') + (sel.cidade ? ' · ' + sel.cidade : ''))], ['GTA', h(sel.gta || '—')], ['Nota fiscal', h(sel.nota_fiscal || '—')]]
                     .map(function (x) { return '<tr><td style="color:var(--suave)">' + x[0] + '</td><td>' + x[1] + '</td></tr>'; }).join('') + '</tbody></table>' +
                 '<div class="acoes"><button class="btn" data-ficha-controle>Ficha controle (imprimir)</button><button class="btn alt" data-editar-lote>Editar lote</button>' +
@@ -230,7 +230,7 @@
 
     /* FICHA CONTROLE DE LOTES (igual à da porta do galpão) — sai em folha deitada */
     function fichaControle(db, l) {
-        var idades = D.controleIdades(l), porCol = Math.ceil(idades.length / 4), sem = D.idade(l);
+        var idades = D.controleIdades(l, db), porCol = Math.ceil(idades.length / 4), sem = D.idade(l);
         var linhasIdade = [];
         for (var i = 0; i < porCol; i++) {
             var cel = [];
@@ -245,7 +245,7 @@
         }).join('');
         var cab = [['Data chegada', D.br(l.data_inicio)], ['Data nasc.', D.br(l.data_nascimento) || ''], ['Semanas', sem == null ? '' : sem], ['Número lote', h(l.lote)],
             ['Origem', h(l.origem || '')], ['Cidade', h(l.cidade || '')], ['Quantidade animais', fmt(l.aves_iniciais)], ['Aves vivas hoje', fmt(D.avesVivas(db, l))],
-            ['Nº GTA', h(l.gta || '')], ['Nota fiscal', h(l.nota_fiscal || '') + (l.data_nota ? ' · ' + D.br(l.data_nota) : '')], ['Raça', h(l.linhagem)], ['Descarte previsto', D.br(l.descarte_previsto || D.descartePrevisto(l))]];
+            ['Nº GTA', h(l.gta || '')], ['Nota fiscal', h(l.nota_fiscal || '') + (l.data_nota ? ' · ' + D.br(l.data_nota) : '')], ['Raça', h(l.linhagem)], ['Descarte previsto', D.br(l.descarte_previsto || D.descartePrevisto(l, db))]];
         return '<div class="ficha-controle">' +
             '<div class="fc-topo"><div><h1>Ficha controle de lotes</h1>' +
                 '<table class="fc-cab">' + [0, 4, 8].map(function (k) { return '<tr>' + cab.slice(k, k + 4).map(function (c) { return '<th>' + c[0] + '</th><td>' + c[1] + '</td>'; }).join('') + '</tr>'; }).join('') + '</table></div>' +
@@ -310,10 +310,10 @@
     function formLote(db, lote, preset) {
         UI.abrirJanela({
             tabela: 'lotes', titulo: lote ? 'Editar lote ' + lote.lote : 'Novo lote',
-            sub: 'Lote = número do espaço + ano de alojamento (ex.: 20/2026). O descarte previsto é calculado pelo nascimento (' + D.SEMANAS_DESCARTE + ' semanas) e pode ser mudado. As vacinas saem sozinhas pela data de nascimento.',
+            sub: 'Lote = número do espaço + ano de alojamento (ex.: 20/2026). O descarte previsto é calculado pelo nascimento (' + D.semanasDescarte(db) + ' semanas) e pode ser mudado. As vacinas saem sozinhas pela data de nascimento.',
             valores: lote || Object.assign({ lote: D.proximoLote(db), data_inicio: D.hoje(), ativo: 'Sim', linhagem: (db.linhagens[0] || {}).linhagem }, preset || {}),
             aoAbrir: function (f) {
-                var calc = function () { if (!f.descarte_previsto.dataset.mexeu) f.descarte_previsto.value = D.descartePrevisto({ data_nascimento: f.data_nascimento.value, data_inicio: f.data_inicio.value }); };
+                var calc = function () { if (!f.descarte_previsto.dataset.mexeu) f.descarte_previsto.value = D.descartePrevisto({ data_nascimento: f.data_nascimento.value, data_inicio: f.data_inicio.value }, db); };
                 f.descarte_previsto.addEventListener('input', function () { this.dataset.mexeu = '1'; });
                 f.data_nascimento.addEventListener('change', calc); f.data_inicio.addEventListener('change', calc);
                 if (!lote) calc();
@@ -326,7 +326,7 @@
                 if (n(v.aves_iniciais) < 1) throw new Error('Informe ao menos uma ave alojada.');
                 if (lote && lote.lote !== v.lote && ['coletas', 'mortalidade', 'saida'].some(function (t) { return db[t].some(function (r) { return String(r.lote) === String(lote.lote); }); }))
                     throw new Error('Este lote já tem lançamentos: o número não pode mudar.');
-                if (!v.descarte_previsto) v.descarte_previsto = D.descartePrevisto(v);
+                if (!v.descarte_previsto) v.descarte_previsto = D.descartePrevisto(v, db);
                 await API.salvar('lotes', v, lote && lote.id, S, (lote ? 'Editou o lote ' : 'Cadastrou o lote ') + v.lote);
                 loteEscolhido = v.lote;
                 UI.avisar('Lote salvo'); Sistema.atualizar();

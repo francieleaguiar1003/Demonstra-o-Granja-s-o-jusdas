@@ -128,7 +128,7 @@ var DadosExemplo = (function () {
             var num = i + 1, nasc = -230 + (i % 6) * 7, cheg = nasc + 120;
             var lote = { lote: cod(num), linhagem: lin, aves_iniciais: 400 + (i % 5) * 50, data_nascimento: dia(nasc), data_inicio: dia(cheg),
                 origem: 'Teste', cidade: '', gta: '', nota_fiscal: '', ativo: 'Sim' };
-            lote.descarte_previsto = lote.data_nascimento ? D.descartePrevisto(lote) : '';
+            lote.descarte_previsto = lote.data_nascimento ? D.descartePrevisto(lote, db) : '';
             add('lotes', lote, ADM);
         });
 
@@ -286,16 +286,20 @@ var DadosExemplo = (function () {
 
         /* checklist das colaboradoras: cada uma faz o dos lotes dela, todo dia (+ serviços gerais).
            Hoje: só Ronilda e Ana Cristina já fizeram (completo: todas). */
-        var resp = function (nc) { return JSON.stringify(D.CHECK_LOTE.map(function (_, i) { return i < 20 - nc ? 'C' : 'NC'; })); };
+        /* cada checklist leva junto a lista de itens usada no dia (ver dominio.js, tabela checklist_colab) */
+        var itensLote = JSON.stringify(D.CHECK_LOTE), itensGeral = JSON.stringify(D.CHECK_GERAL);
+        var resp = function (lista, nc) { return JSON.stringify(lista.map(function (_, i) { return i < lista.length - nc ? 'C' : 'NC'; })); };
         for (d = PRIMEIRO; d <= 0; d++) {
             COLABORADORAS.forEach(function (col, ci) {
                 if (d === 0 && ci > 1 && !COMPLETO) return;
                 col[1].forEach(function (num, k) {
                     var nc = d === -3 && ci === 0 && k === 0 ? 2 : 0;
-                    add('checklist_colab', { data: dia(d), lote: cod(num), tipo: 'lote', colaboradora: col[0], respostas: resp(nc), c: 20 - nc, nc: nc, observacao: nc ? 'Cortina rasgada no lado sul.' : '' }, COLETA);
+                    add('checklist_colab', { data: dia(d), lote: cod(num), tipo: 'lote', colaboradora: col[0], respostas: resp(D.CHECK_LOTE, nc), itens: itensLote,
+                        c: D.CHECK_LOTE.length - nc, nc: nc, observacao: nc ? 'Cortina rasgada no lado sul.' : '' }, COLETA);
                 });
             });
-            if (d < 0 || COMPLETO) add('checklist_colab', { data: dia(d), lote: '', tipo: 'geral', colaboradora: 'Lurdinha', respostas: resp(1), c: 19, nc: 1, observacao: '' }, COLETA);
+            if (d < 0 || COMPLETO) add('checklist_colab', { data: dia(d), lote: '', tipo: 'geral', colaboradora: 'Lurdinha', respostas: resp(D.CHECK_GERAL, 1), itens: itensGeral,
+                c: D.CHECK_GERAL.length - 1, nc: 1, observacao: '' }, COLETA);
         }
         add('config', { chave: 'validade_dias', valor: '30' });
         add('alteracoes', { data: dia(0), hora: '08:40', quem: COLETA + ' · Ronilda', sistema: 'Colaboradoras', o_que: 'Lançou coleta nº 1 · lote da coleta ' + L(0) });

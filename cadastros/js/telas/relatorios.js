@@ -163,6 +163,10 @@
             return { resumo: [['Clientes', db.clientes.length]], cab: ['Código', 'Nome', 'CNPJ', 'Cidade', 'Telefone', 'Vendedor'],
                 linhas: db.clientes.map(function (c) { return [c.codigo, c.nome, c.cnpj, c.cidade, c.telefone, c.vendedor].map(h); }) };
         } },
+        produtos: { aba: 'benef', grupo: 'Vendas e entregas', desc: 'Lista de produtos com código de barras e ovos por embalagem', nome: 'Cadastro de produtos', gerar: function (db) {
+            return { resumo: [['Produtos', db.produtos.length]], cab: ['Nome', 'Nome público', 'Código de barras', { t: 'Ovos/embalagem', num: 1 }, { t: 'Estoque mínimo', num: 1 }, 'Sai da máquina como'],
+                linhas: db.produtos.map(function (p) { return [h(p.nome), h(p.curto), h(p.codigo_barras), fmt(p.ovos), fmt(p.estoque_minimo), h(p.maquina)]; }) };
+        } },
 
         /* =====================================================
            3. COLABORADORAS (só administrador)
@@ -196,8 +200,8 @@
         return { resumo: [['Checklists', r.length], ['Conformes (C)', fmt(r.reduce(function (s, c) { return s + n(c.c); }, 0))], ['Não conformes (NC)', fmt(r.reduce(function (s, c) { return s + n(c.nc); }, 0))]],
             cab: ['Data', 'Lote', 'Tipo', 'Colaboradora', { t: 'C', num: 1 }, { t: 'NC', num: 1 }, { t: 'Itens não conformes', quebra: 1 }, 'Situação'],
             linhas: r.map(function (c) {
-                var itens = c.tipo === 'geral' ? D.CHECK_GERAL : D.CHECK_LOTE;
-                var nc = D.lerJSON(c.respostas, []).map(function (x, i) { return x === 'NC' ? (i + 1) + '. ' + itens[i] : null; }).filter(Boolean);
+                var itens = D.itensDoChecklist(db, c);   // a lista que valia no dia daquele checklist
+                var nc = D.lerJSON(c.respostas, []).map(function (x, i) { return x === 'NC' ? (i + 1) + '. ' + (itens[i] || 'item ' + (i + 1)) : null; }).filter(Boolean);
                 return [D.br(c.data), h(c.lote), c.tipo === 'geral' ? 'Serviços gerais' : 'Lote', h(c.colaboradora), fmt(c.c), fmt(c.nc), h(nc.join(' · ')) || '—', n(c.nc) ? 'Requer atenção' : 'Conforme'];
             }) };
     }

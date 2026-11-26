@@ -288,6 +288,8 @@
        ===================================================== */
     var motivo = 'Briga';
     function mortalidade(el, db) {
+        /* motivo começa marcado no 1º da lista (a granja pode ter trocado a lista em Configurações) */
+        if (D.motivos(db).indexOf(motivo) < 0) motivo = D.motivos(db)[0];
         var lote = (meusLotes(db)[0] || {}).lote || '';
         var recentes = db.mortalidade.filter(function (r) { return ehMeu(db, r.lote); }).sort(function (a, b) { return String(b.data).localeCompare(String(a.data)); }).slice(0, 6);
         el.innerHTML = '<p class="eyebrow">Vai direto para Granja › Mortalidade</p><h1 class="titulo-colab">Registrar mortalidade</h1>' +
@@ -296,7 +298,7 @@
                 '<label>Data<input type="date" name="data" value="' + D.hoje() + '"></label><label>Lote<select name="lote">' + opcoesLotes(db, lote) + '</select></label></div>' +
                 '<div class="form" style="margin-top:16px">' + contador('Mortes', 'mortes', 0, 'Aves encontradas mortas') + contador('Abate', 'abate', 0, 'Aves sacrificadas ou retiradas') + '</div>' +
                 '<fieldset style="margin:16px 0 0;padding:0;border:0"><legend class="rotulo">Motivo</legend><div class="motivos">' +
-                    D.MOTIVOS.map(function (m) { return '<button type="button" data-motivo="' + h(m) + '" aria-pressed="' + (m === motivo) + '" class="' + (m === motivo ? 'ativo' : '') + '">' + h(m) + '</button>'; }).join('') + '</div></fieldset>' +
+                    D.motivos(db).map(function (m) { return '<button type="button" data-motivo="' + h(m) + '" aria-pressed="' + (m === motivo) + '" class="' + (m === motivo ? 'ativo' : '') + '">' + h(m) + '</button>'; }).join('') + '</div></fieldset>' +
                 '<label style="margin-top:16px">Observação<textarea name="observacao" rows="2" placeholder="O que foi visto (opcional)"></textarea></label>' +
                 '<p class="faixa" data-resumo></p><button class="btn grande" type="submit">Salvar mortalidade na granja</button></form>' +
             '<div class="estreito"><div class="card"><h2 data-titulo-aves></h2><div class="indicadores" data-aves style="grid-template-columns:repeat(3,minmax(0,1fr))"></div></div>' +
@@ -327,7 +329,7 @@
             e.preventDefault();
             var v = { data: f.data.value, lote: f.lote.value, mortes: n(f.mortes.value), abate: n(f.abate.value), motivo: motivo, observacao: f.observacao.value.trim() };
             var l = D.acharLote(db, v.lote);
-            if (!l) { UI.avisar('Escolha o lote.'); return; }
+            if (!l || !ehMeu(db, v.lote)) { UI.avisar('Escolha um dos seus lotes.'); return; }
             if (v.mortes + v.abate < 1) v.motivo = 'Sem perdas';   // pode salvar zerado (registra que não houve perdas)
             if (v.mortes + v.abate > D.avesVivas(db, l)) { UI.avisar('O número passa das aves vivas do lote.'); return; }
             var b = f.querySelector('[type=submit]'); b.disabled = true; b.textContent = 'Salvando na granja…';
@@ -355,8 +357,10 @@
         var atual = todos.find(function (x) { return x.tipo === ck.tipo && (x.tipo === 'geral' || String(x.lote) === String(ck.lote)); });
         if (!atual) { atual = todos.find(function (x) { return !x.feito; }) || todos[0]; ck.tipo = atual.tipo; ck.lote = atual.lote; }
         if (ck.tipo === 'geral') ck.lote = '';
-        var itens = ck.tipo === 'geral' ? D.CHECK_GERAL : D.CHECK_LOTE;
         var feito = (ck.tipo === 'geral' || ck.lote) ? checklistDeHoje(db, ck.lote, ck.tipo) : null;
+        /* Refazendo um checklist já salvo: vale a lista que ele levou junto, para as
+           respostas (guardadas por posição) continuarem alinhadas com os itens certos. */
+        var itens = feito ? D.itensDoChecklist(db, feito) : (ck.tipo === 'geral' ? D.checkGeral(db) : D.checkLote(db));
         var chave = ck.lote + '|' + ck.tipo;
         if (ck.chave !== chave) { ck.chave = chave; ck.respostas = feito ? D.lerJSON(feito.respostas, []).reduce(function (o, x, i) { o[i] = x; return o; }, {}) : {}; }
 
@@ -425,7 +429,8 @@
             var quem = !compartilhado() ? usuario.nome : pessoaAtual(db) ? pessoaAtual(db).nome : $('[data-quem]', el).value.trim();
             if (!quem) { UI.avisar('Escreva o seu nome em "Seu nome" antes de salvar.'); $('[data-quem]', el).focus(); return; }
             lembrarQuem(quem);
-            var v = { data: D.hoje(), lote: ck.lote, tipo: ck.tipo, colaboradora: quem, respostas: JSON.stringify(resp), c: c, nc: resp.length - c, observacao: $('[data-obs]', el).value.trim() };
+            var v = { data: D.hoje(), lote: ck.lote, tipo: ck.tipo, colaboradora: quem, respostas: JSON.stringify(resp), itens: JSON.stringify(itens),
+                c: c, nc: resp.length - c, observacao: $('[data-obs]', el).value.trim() };
             b.disabled = true; b.textContent = 'Salvando…';
             try {
                 await API.salvar('checklist_colab', v, feito && feito.id, S, (feito ? 'Refez' : 'Concluiu') + ' o checklist do dia · ' + (ck.tipo === 'geral' ? 'Serviços gerais' : 'Lote ' + ck.lote) + ' · C=' + c + ' NC=' + (resp.length - c));
@@ -502,6 +507,7 @@
         f.addEventListener('submit', async function (e) {
             e.preventDefault();
             var v = { data: D.hoje(), lote: f.lote.value, gravidade: gravidade, descricao: f.descricao.value.trim(), registrado_por: usuario.nome, resolvido: 'Não' };
+            if (v.lote && !ehMeu(db, v.lote)) { UI.avisar('Escolha um dos seus lotes, ou Geral.'); return; }
             if (!v.descricao) { UI.avisar('Escreva o que aconteceu.'); f.descricao.focus(); return; }
             var curta = UI.descricaoCurta(v.descricao);
             if (curta) { UI.avisar(curta); f.descricao.focus(); return; }
