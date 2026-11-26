@@ -16,7 +16,7 @@
    PREFIXO_CACHE: nome do site. Na demonstração online os 3 sites ficam no mesmo
    endereço; cada um apaga SÓ os caches com o prefixo dele. */
 var PREFIXO_CACHE = 'erp-ovo-online-mes-';
-var VERSAO = 'erp-ovo-online-mes-20261126-021646';
+var VERSAO = 'erp-ovo-online-mes-20261126-024951';
 var ARQUIVOS = ['./', 'colaboradora.html', 'css/style.css', 'img/icone-192.png', 'img/icone-512.png', 'img/logo.png', 'index.html', 'js/api.js', 'js/colaboradora.js', 'js/comum.js', 'js/config.js', 'js/demo-dados.js', 'js/dominio.js', 'js/entrada.js', 'js/sistema.js', 'js/telas/beneficiamento.js', 'js/telas/cadastro-padrao.js', 'js/telas/cadastros.js', 'js/telas/configuracoes.js', 'js/telas/granja.js', 'js/telas/painel.js', 'js/telas/pedidos.js', 'js/telas/relatorios.js', 'manifest.webmanifest', 'sistema.html'];
 
 /* 2. INSTALAR */

@@ -78,7 +78,7 @@ var Sistema = (function () {
         /* Recomeçar: só na demonstração local (na online, os dados são preparados na planilha) */
         var selos = !API.nomeDemo ? '' : API.demo && usuario.perfil === 'Administrador'
             ? '<button class="selo-demo" type="button" data-zerar-demo title="Recomeçar a demonstração (zerada, só cadastros, 1 semana ou 1 mês)">Demonstração · recomeçar</button> '
-            : '<span class="selo-demo">' + UI.h(API.nomeDemo) + '</span> ';
+            : '<span class="selo-demo">' + UI.h(API.nomeDemo) + '</span> ' + UI.seloTrocarVersao();
         selos += UI.selosFila();
         $('#selos').innerHTML = selos;
         UI.ligarSelosFila($('#selos'), atualizar);

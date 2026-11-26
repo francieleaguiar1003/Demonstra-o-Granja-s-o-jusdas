@@ -466,8 +466,14 @@ var UI = (function () {
         window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { /* sem cópia: segue normal */ }); });
     }
 
+    /* Demonstração online: botão para voltar à página que escolhe a versão
+       (só cadastros, 1 semana, 1 mês). Cada versão é uma pasta; a página fica uma acima. */
+    function seloTrocarVersao() {
+        return window.API && API.online ? '<a class="selo-demo" href="../" title="Voltar para escolher outra versão da demonstração">⇄ Trocar versão</a> ' : '';
+    }
+
     return {
-        selosFila: selosFila, ligarSelosFila: ligarSelosFila, contarCaracteres: contarCaracteres, descricaoCurta: descricaoCurta,
+        seloTrocarVersao: seloTrocarVersao, selosFila: selosFila, ligarSelosFila: ligarSelosFila, contarCaracteres: contarCaracteres, descricaoCurta: descricaoCurta,
         $: $, $$: $$, n: n, fmt: fmt, pct: pct, h: h, tag: tag, ligar: ligar, dataExtenso: dataExtenso, saudacao: saudacao,
         trocarTema: trocarTema, avisar: avisar, icone: icone, ICONE_TEMA: ICONE_TEMA, tabela: tabela, grafico: grafico, legenda: legenda,
         codigoBarras: codigoBarras, abrirJanela: abrirJanela, confirmar: confirmar, campoHTML: campoHTML,

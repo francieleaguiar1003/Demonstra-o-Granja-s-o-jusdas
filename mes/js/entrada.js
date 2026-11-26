@@ -72,7 +72,7 @@
        cada um pertence, com o selo da versão. NÃO mostra senha (quem passa é a
        Franciele) e os dados ficam na planilha, não no navegador. */
     if (API.online && typeof DadosExemplo !== 'undefined') {
-        $('#demo-logins').innerHTML = '<div class="demo-logins"><span class="selo-demo">' + UI.h(API.nomeDemo) + '</span>' +
+        $('#demo-logins').innerHTML = '<div class="demo-logins"><span class="selo-demo">' + UI.h(API.nomeDemo) + '</span> ' + UI.seloTrocarVersao() +
             '<div class="logins-demo" style="margin-top:var(--esp-2)">' + DadosExemplo.LOGINS.map(function (x) {
                 return '<button type="button" class="login-demo" data-login="' + x[0] + '"><b>' + x[0] + '</b><small>' + x[3] + '</small></button>';
             }).join('') + '</div>' +

@@ -110,7 +110,7 @@
         $('#menu-avatar').textContent = (pessoa ? pessoa.nome : usuario.nome).charAt(0);
         $('#menu-perfil').innerHTML = pessoa ? 'Login ' + h(usuario.usuario) + ' · <button type="button" class="trocar-pessoa" data-trocar-pessoa>Trocar</button>' : h(usuario.perfil);
         if (precisaEscolher(db)) {
-            $('#menu-itens').innerHTML = ''; $('#selos').innerHTML = API.nomeDemo ? '<span class="selo-demo">' + h(API.nomeDemo) + '</span>' : '';
+            $('#menu-itens').innerHTML = ''; $('#selos').innerHTML = (API.nomeDemo ? '<span class="selo-demo">' + h(API.nomeDemo) + '</span> ' : '') + UI.seloTrocarVersao();
             escolherPessoa($('#tela'), db); document.body.classList.remove('menu-aberto'); window.scrollTo(0, 0); return;
         }
         var pendentes = checklistsDeHoje(db).filter(function (x) { return !x.feito; }).length;
@@ -120,7 +120,7 @@
             return '<a href="#' + t[0] + '" class="' + (t[0] === id ? 'ativo ' : '') + (t[2] ? 'granja-link' : '') + '"' + (t[0] === id ? ' aria-current="page"' : '') + '>' + t[1] + ' ' + extra + '</a>';
         }).join('') + (usuario.perfil !== 'Colaboradora' ? '<a href="sistema.html" style="margin-top:12px">← Voltar ao sistema da gestão</a>' : '');
         montarSino(db);
-        $('#selos').innerHTML = (API.nomeDemo ? '<span class="selo-demo">' + h(API.nomeDemo) + '</span> ' : '') + UI.selosFila();
+        $('#selos').innerHTML = (API.nomeDemo ? '<span class="selo-demo">' + h(API.nomeDemo) + '</span> ' : '') + UI.seloTrocarVersao() + UI.selosFila();
         UI.ligarSelosFila($('#selos'), abrir);
         ({ resumo: resumo, coleta: coleta, mortalidade: mortalidade, checklist: checklist, avisos: avisos })[id]($('#tela'), db);
         document.body.classList.remove('menu-aberto');
