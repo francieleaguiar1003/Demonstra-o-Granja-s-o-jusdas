@@ -17,7 +17,7 @@
 window.CONFIG = {
 
     /* 1. Endereço do Apps Script (vazio = demonstração) */
-    API_URL: '',
+    API_URL: 'https://script.google.com/macros/s/AKfycbwaMJRYRrBqD2dWYqeRa4kGNyIlcO_6URWmeZ0pQTR7q1yGN8zd5jKIFhv18hrKAzIf/exec',
 
     /* 2. Nome que aparece nas telas e nas folhas impressas */
     EMPRESA: 'Ovo Caipira',
