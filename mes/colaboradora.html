@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ovo Caipira · Colaboradoras da granja</title>
+    <link rel="icon" href="img/logo.png">
+    <!-- Vira "aplicativo" no celular (Adicionar à tela inicial) e abre sem internet -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#2f3557">
+    <link rel="apple-touch-icon" href="img/icone-192.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="pagina-colab">
+
+    <!-- =====================================================
+         ÁREA DAS COLABORADORAS
+         Abre para as colaboradoras e também para o administrador
+         e a equipe (Granja e Beneficiamento), sem restrição.
+         A colaboradora vê só os lotes liberados para ela.
+         ===================================================== -->
+    <div class="app">
+
+        <!-- ---------- MENU DELA ---------- -->
+        <aside class="menu" id="menu">
+            <a class="marca" href="#resumo">
+                <img src="img/logo.png" alt="">
+                <span><b>Ovo Caipira</b><small>Colaboradoras da granja</small></span>
+            </a>
+            <nav id="menu-itens" aria-label="Menu da colaboradora"></nav>
+            <div class="menu-usuario">
+                <span class="avatar" id="menu-avatar"></span>
+                <span class="quem"><b id="menu-nome"></b><span id="menu-perfil">Colaboradora</span></span>
+                <div class="menu-acoes">
+                    <button id="botao-senha" title="Alterar minha senha"></button>
+                    <button id="botao-sair" title="Sair"></button>
+                </div>
+            </div>
+        </aside>
+        <div id="fundo-menu"></div>
+
+        <main>
+            <!-- ---------- BARRA DO TOPO ---------- -->
+            <header class="topo">
+                <button class="botao-redondo" id="botao-menu" aria-label="Abrir menu"></button>
+                <div class="caminho"><span class="eyebrow" style="display:block;font-size:11px">Sítio São Judas Tadeu</span><b>Rotina de coleta e cuidados</b></div>
+                <span id="selos"></span>
+                <a class="botao-redondo" id="botao-avisos" href="#avisos" aria-label="Meus avisos" hidden></a>
+                <button class="botao-redondo" id="botao-tema" aria-label="Alternar tema claro/escuro"></button>
+            </header>
+
+            <!-- ---------- TELA ATUAL ---------- -->
+            <div id="tela"><p class="carregando">Carregando…</p></div>
+        </main>
+    </div>
+
+    <!-- =====================================================
+         SCRIPTS (a ordem importa)
+         ===================================================== -->
+    <script src="js/config.js"></script>
+    <script src="js/dominio.js"></script>
+    <script src="js/demo-dados.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/comum.js"></script>
+    <script src="js/colaboradora.js"></script>
+</body>
+</html>

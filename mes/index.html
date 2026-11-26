@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar · ERP Ovo Caipira</title>
+    <link rel="icon" href="img/logo.png">
+    <!-- Vira "aplicativo" no celular (Adicionar à tela inicial) e abre sem internet -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#2f3557">
+    <link rel="apple-touch-icon" href="img/icone-192.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- =====================================================
+         TELA DE ENTRADA (única para todo mundo)
+         Gestão vai para sistema.html; colaboradora vai para
+         colaboradora.html. Quem decide é o perfil em Usuários.
+         ===================================================== -->
+    <div class="entrada">
+
+        <!-- ---------- Lado da marca ---------- -->
+        <section class="entrada-marca">
+            <div class="logo">
+                <img src="img/logo.png" alt="Logo Ovo Caipira">
+                <div><b>Ovo Caipira</b><span>Sítio São Judas Tadeu · Sistema de Gestão</span></div>
+            </div>
+            <div>
+                <p class="frase">Galinhas livres e felizes, ovos direto do sítio para a sua mesa.</p>
+                <p class="apoio">Da coleta no galpão ao romaneio de entrega: granja, beneficiamento e colaboradoras no mesmo sistema.</p>
+            </div>
+            <ul class="entrada-sistemas">
+                <li>
+                    <span class="circulo-icone" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M9 12c0-3 2-5 4.5-5M12 7.5c.5-1.6 1.6-2.5 3-2.5M8.5 11.5 6 13l2.8.8M9 12c-.6 4 .4 8 4 10.5 3.5 2.4 9 2 12-1.5 1.8-2.2 2-5.2.6-7.8L24 16c-2 .5-4.6-.2-6.2-2.2C16 11.6 13 10 9 12zM14 23l-1 4h3M20 23.5l1 3.5h-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <b>Granja</b>Lotes, coletas e bem-estar
+                </li>
+                <li>
+                    <span class="circulo-icone" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M5 15 16 6l11 9M8 13v13h16V13M13 26v-7h6v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <b>Beneficiamento</b>Embalagem, pedidos e entregas
+                </li>
+                <li>
+                    <span class="circulo-icone" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M10 7h12v20H10zM13 5h6v4h-6zM13 14l1.6 1.6L17.5 12.5M13 21l1.6 1.6 2.9-3.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <b>Colaboradoras</b>Rotinas e checklist
+                </li>
+            </ul>
+        </section>
+
+        <!-- ---------- Cartão de entrada ---------- -->
+        <section class="entrada-cartao-area">
+            <button class="botao-redondo" id="botao-tema" aria-label="Alternar tema claro/escuro"></button>
+
+            <form class="entrada-cartao" id="form-entrar">
+                <h1>Bem-vinda de volta</h1>
+                <p class="nota" style="margin:2px 0 4px">Entre com o usuário e a senha cadastrados em Usuários.</p>
+
+                <div class="campo"><label for="login-usuario">Usuário<input id="login-usuario" autocomplete="username" placeholder="Seu usuário de acesso" required></label></div>
+                <div class="campo"><label for="login-senha">Senha<input id="login-senha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required></label></div>
+                <label class="marcar" style="border:0;padding:6px 0"><input type="checkbox" id="ver-senha"> Mostrar senha</label>
+
+                <p id="login-erro" hidden></p>
+                <button class="btn" type="submit">Entrar</button>
+                <button class="link-simples" type="button" id="link-esqueci">Esqueci minha senha</button>
+
+                <!-- Esqueci minha senha: manda um pedido aos administradores (a senha só volta pelas mãos deles) -->
+                <div id="esqueci" hidden>
+                    <div class="campo"><label for="esqueci-usuario">Seu usuário<input id="esqueci-usuario" placeholder="Ex.: ronilda"></label></div>
+                    <button class="btn alt" type="button" id="botao-restaurar" style="margin-top:10px">Pedir ajuda ao administrador</button>
+                    <p class="nota" id="esqueci-msg"></p>
+                </div>
+
+                <!-- Só aparece no modo demonstração (montado pelo entrada.js) -->
+                <div id="demo-logins"></div>
+            </form>
+        </section>
+    </div>
+
+    <!-- =====================================================
+         SCRIPTS (a ordem importa)
+         1. config.js     → endereço da planilha (vazio = demonstração)
+         2. dominio.js    → tabelas e regras
+         3. demo-dados.js → dados de exemplo (só na versão de demonstração)
+         4. api.js        → planilha ou demonstração
+         5. comum.js      → peças comuns
+         6. entrada.js    → funcionamento desta tela
+         ===================================================== -->
+    <script src="js/config.js"></script>
+    <script src="js/dominio.js"></script>
+    <script src="js/demo-dados.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/comum.js"></script>
+    <script src="js/entrada.js"></script>
+</body>
+</html>

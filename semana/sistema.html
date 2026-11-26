@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP Ovo Caipira · Sistema de Gestão</title>
+    <link rel="icon" href="img/logo.png">
+    <!-- Vira "aplicativo" no celular (Adicionar à tela inicial) e abre sem internet -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#2f3557">
+    <link rel="apple-touch-icon" href="img/icone-192.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- =====================================================
+         SISTEMA DA GESTÃO
+         Menu lateral (montado pelo sistema.js, só com as telas
+         liberadas para quem entrou) + barra do topo + tela.
+         Cada tela é desenhada por um arquivo em js/telas/.
+         ===================================================== -->
+    <div class="app">
+
+        <!-- ---------- MENU LATERAL ---------- -->
+        <aside class="menu" id="menu">
+            <a class="marca" href="#painel">
+                <img src="img/logo.png" alt="">
+                <span><b>Ovo Caipira</b><small>Sítio São Judas Tadeu · ERP</small></span>
+            </a>
+            <nav id="menu-itens" aria-label="Menu principal"></nav>
+            <div class="menu-usuario">
+                <span class="avatar" id="menu-avatar"></span>
+                <span class="quem"><b id="menu-nome"></b><span id="menu-perfil"></span></span>
+                <div class="menu-acoes">
+                    <button id="botao-senha" title="Trocar minha senha"></button>
+                    <button id="botao-sair" title="Sair"></button>
+                </div>
+            </div>
+        </aside>
+        <div id="fundo-menu"></div>
+
+        <main>
+            <!-- ---------- BARRA DO TOPO ---------- -->
+            <header class="topo">
+                <button class="botao-redondo" id="botao-menu" aria-label="Abrir menu"></button>
+                <nav class="caminho" id="caminho" aria-label="Você está em"></nav>
+                <label class="busca"><span class="sr-only">Buscar</span><span id="icone-busca"></span>
+                    <input type="search" id="busca-geral" placeholder="Buscar lote, pedido, cliente…">
+                </label>
+                <span id="selos"></span>
+                <a class="botao-redondo" id="botao-avisos" href="#painel" aria-label="Avisos"></a>
+                <button class="botao-redondo" id="botao-tema" aria-label="Alternar tema claro/escuro"></button>
+            </header>
+
+            <!-- ---------- TELA ATUAL ---------- -->
+            <div id="tela"><p class="carregando">Carregando os dados…</p></div>
+        </main>
+    </div>
+
+    <!-- =====================================================
+         SCRIPTS (a ordem importa)
+         1. config / dominio / demo-dados / api / comum → base
+         2. sistema.js        → menu, rotas e barra do topo
+         3. telas/*.js        → uma tela (ou grupo de telas) por arquivo
+         4. sistema.iniciar() → começa
+         ===================================================== -->
+    <script src="js/config.js"></script>
+    <script src="js/dominio.js"></script>
+    <script src="js/demo-dados.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/comum.js"></script>
+    <script src="js/sistema.js"></script>
+    <script src="js/telas/cadastro-padrao.js"></script>
+    <script src="js/telas/painel.js"></script>
+    <script src="js/telas/granja.js"></script>
+    <script src="js/telas/beneficiamento.js"></script>
+    <script src="js/telas/pedidos.js"></script>
+    <script src="js/telas/cadastros.js"></script>
+    <script src="js/telas/relatorios.js"></script>
+    <script>Sistema.iniciar();</script>
+</body>
+</html>

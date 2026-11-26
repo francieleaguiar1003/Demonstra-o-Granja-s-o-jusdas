@@ -1,0 +1,14 @@
+{
+  "name": "ERP Ovo Caipira · Demonstração 1 mês",
+  "short_name": "Ovo Caipira 1 mês",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#2f3557",
+  "theme_color": "#2f3557",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "img/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "img/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
